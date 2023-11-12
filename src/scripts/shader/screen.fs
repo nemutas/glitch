@@ -1,6 +1,3 @@
-// reference
-// https://youtu.be/zyRCDYmO1VQ?si=FI356kUpqRgePzZe
-
 precision mediump float;
 
 struct Flag {
@@ -19,11 +16,13 @@ uniform sampler2D tImage;
 uniform vec2 uCoveredScale;
 uniform float uTime;
 uniform Flag uFlag;
+uniform float uSaturation;
 
 varying vec2 vUv;
 
 #include './modules/snoise21.glsl'
 #include './modules/blend.glsl'
+#include './modules/color.glsl'
 
 float hash(vec2 p) {
   return fract(1e4 * sin(17.0 * p.x + p.y * 0.1) * (0.1 + abs(sin(p.y * 13.0 + p.x))));
@@ -31,21 +30,19 @@ float hash(vec2 p) {
 
 void main() {
   vec2 uv = (vUv - 0.5) * uCoveredScale + 0.5;
-  vec4 image = texture2D(tImage, uv);
-  vec3 color = image.rgb;
 
   if (uFlag.waveform_wrap) {
     float n = snoise(vec2(uTime * 15.0));
     float s = sin(vUv.y * 1000.0 + sin(vUv.y * 1000.0)) * n * 0.005;
-    image = texture2D(tImage, uv + vec2(s, 0.0));
-    color = image.rgb;
+    uv.x += s;
   }
 
   if (uFlag.deform_line) {
     float n = snoise(floor((vUv + vec2(0.0, -uTime * 0.1)) * vec2(1.0, 3.0))) * 0.05;
-    image = texture2D(tImage, uv + vec2(n, 0.0));
-    color = image.rgb;
+    uv.x += n;
   }
+
+  vec3 color = texture2D(tImage, uv).rgb;
 
   // ==========================
 
@@ -111,6 +108,10 @@ void main() {
     float n = hash(uv + uTime);
     color = blendOverlay(color, vec3(n), 0.2);
   }
+
+  vec3 hsv = rgb2hsv(color);
+  hsv.g *= uSaturation;
+  color = hsv2rgb(hsv);
 
   gl_FragColor = vec4(color, 1.0);
 }

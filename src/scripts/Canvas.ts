@@ -38,6 +38,7 @@ export class Canvas {
         tImage: { value: texture },
         uCoveredScale: { value: three.coveredScale(texture.userData.aspect) },
         uTime: { value: 0 },
+        uSaturation: { value: 1 },
         uFlag: {
           value: {
             waveform_wrap: false,
@@ -66,6 +67,8 @@ export class Canvas {
     for (let name of Object.keys(frag)) {
       gui.add(frag, name)
     }
+
+    gui.add(this.screen.material.uniforms.uSaturation, 'value', 0.5, 2.0, 0.01).name('saturation')
   }
 
   private addEvents() {
